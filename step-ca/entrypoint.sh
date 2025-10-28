@@ -8,11 +8,10 @@ mkdir -p "${PASSWORD_PATH}"
 
 # Checks
 if [ -z "$STEP_CA_PASSWORD" ] || [ -z "$ORGANISATION" ] || [ -z "$DOMAIN_SUFFIX" ] || [ -z "$TRAEFIK_EMAIL" ]; then
- echo "❌ Missing environment variables."
- echo "The following variables are mandatory: STEP_CA_PASSWORD, ORGANISATION, DOMAIN_SUFFIX, TRAEFIK_EMAIL."
- exit 1
+    echo "❌ Missing environment variables."
+    echo "The following variables are mandatory: STEP_CA_PASSWORD, ORGANISATION, DOMAIN_SUFFIX, TRAEFIK_EMAIL."
+    exit 1
 fi
-
 
 # Checks if DOMAIN_SUFFIX starts with a period.
 if [[ ! "$DOMAIN_SUFFIX" =~ ^\. ]]; then
@@ -23,32 +22,32 @@ if [[ ! "$DOMAIN_SUFFIX" =~ ^\. ]]; then
 fi
 
 echo "🔧 Configuring step-ca..."
-echo " - Organisation: ${ORGANISATION}"
-echo " - Domain: *${DOMAIN_SUFFIX}"
+echo "   - Organisation: ${ORGANISATION}"
+echo "   - Domain: *${DOMAIN_SUFFIX}"
 
 echo "${STEP_CA_PASSWORD}" > "${PASSWORD_FILEPATH}"
 chmod 600 "${PASSWORD_FILEPATH}"
 
 # Initialization
 if [ ! -f "/home/step/.step/config/ca.json" ]; then
- echo "🔐 Initializing the CA..."
- step ca init \
- --deployment-type="standalone" \
- --provisioner="admin" \
- --name="${ORGANISATION} Development CA" \
- --dns="stepca" \
- --dns="${DOMAIN_SUFFIX}" \
- --address=":9000" \
- --password-file="${PASSWORD_FILEPATH}" \ 
- --provisioner-password-file="${PASSWORD_FILEPATH}"
- 
- # Remove JWK provisioner and add ACME
- step ca provisioner remove admin --all || true
- 
- echo "🔧 Adding ACME provisioner..."
- step ca provisioner add traefik-acme --type ACME
- 
- echo "✅ CA successfully initialized with ACME provisioner"
+    echo "🔐 Initializing the CA..."
+    step ca init \
+        --deployment-type="standalone" \
+        --provisioner="admin" \
+        --name="${ORGANISATION}" \
+        --dns="stepca" \
+        --dns="${DOMAIN_SUFFIX}" \
+        --address=":9000" \
+        --password-file="${PASSWORD_FILEPATH}" \
+        --provisioner-password-file="${PASSWORD_FILEPATH}"
+    
+     # Remove JWK provisioner and add ACME
+    step ca provisioner remove admin --all || true
+    
+    echo "🔧 Adding ACME provisioner..."
+    step ca provisioner add traefik-acme --type ACME
+    
+    echo "✅ CA successfully initialized with ACME provisioner"
 fi
 
 chmod 644 /home/step/.step/certs/root_ca.crt

@@ -60,17 +60,17 @@ The `traefik-config/acme.json` file is where Traefik stores ACME account data an
  
 If `traefik-config/acme.json` is accidentally deleted, recreate it with the correct permissions:
  
-
-    mkdir -p traefik-config
-    touch traefik-config/acme.json
-    chmod 600 traefik-config/acme.json
+ ```sh
+  mkdir -p traefik-config && touch traefik-config/acme.json && chmod 600 traefik-config/acme.json
+ ``` 
 
 ### 3\. Launch
  
 Build the custom Step-CA image and launch the entire stack:
- 
 
-    docker compose up --build -d
+```sh
+docker compose up --build -d
+```
 
 ## 🔐 Trusting the Root CA
  
@@ -96,17 +96,23 @@ To expose a new application (like a web service or API) through Traefik, add its
  
 **Example: Adding a simple** `whoami` service
  
+```yaml
+services:
+  whoami:
+    image: traefik/whoami
+    container_name: whoami
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.whoami.rule=Host(`whoami.test`)
+      - traefik.http.routers.whoami.entrypoints=websecure
+      - traefik.http.routers.whoami.tls.certresolver=stepca
+    networks:
+      - web-proxy
 
-      whoami:
-        image: traefik/whoami
-        container_name: whoami
-        labels:
-          - traefik.enable=true
-          - traefik.http.routers.whoami.rule=Host(`whoami.test`)
-          - traefik.http.routers.whoami.entrypoints=websecure
-          - traefik.http.routers.whoami.tls.certresolver=stepca
-        networks:
-          - web-proxy
+networks:
+  web-proxy:
+    external: true
+```
 
 > **Note on Domain:** In this example, `whoami.test` is hardcoded. This approach assumes that your `DOMAIN_SUFFIX` is `.test`. If your suffix is different (e.g., `.local`), you must adjust the `Host` rule accordingly.
  
@@ -117,35 +123,10 @@ To expose a new application (like a web service or API) through Traefik, add its
  
 To stop and remove all services, volumes, and networks:
  
+```sh
+docker compose down -v
+```
 
-    docker compose down -v
 
 This ensures a clean slate for the next run.
  
-
-## 📜 License
- 
-This project is licensed under the **MIT License**.
- 
-This means you are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, provided you include the original copyright and permission notice.
- 
-> **Note on Third-Party Tools:** This license covers the configuration files (`docker-compose.yml`, custom scripts, etc.). The Docker software, Traefik, and Step-CA are governed by their respective licenses. Please refer to their official documentation for licensing information.
- 
-
-## 🤝 Contributing
- 
-Contributions are always welcome! Whether you have suggestions for new features, bug reports, or improvements to the documentation or scripts, please feel free to:
- 
-
-1.  **Fork** the repository.
-     
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`).
-     
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-     
-4.  Push to the branch (`git push origin feature/AmazingFeature`).
-     
-5.  Open a Pull Request.
-     
-
-Your help makes this project better for everyone.

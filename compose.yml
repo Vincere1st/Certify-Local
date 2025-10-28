@@ -69,3 +69,4 @@ services:
 networks:
   web-proxy:
     driver: bridge
+    name: web-proxy
