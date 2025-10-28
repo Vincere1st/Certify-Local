@@ -65,17 +65,6 @@ services:
       stepca:
         condition: service_healthy
 
-  whoami:
-    image: traefik/whoami
-    container_name: whoami
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.whoami.rule=Host(`whoami.test`)
-      - traefik.http.routers.whoami.entrypoints=websecure
-      - traefik.http.routers.whoami.tls.certresolver=stepca
-    networks:
-      - web-proxy
-
 networks:
   web-proxy:
     driver: bridge
