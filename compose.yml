@@ -1,0 +1,81 @@
+services:
+  stepca:
+    build: ./step-ca
+    environment:
+      STEP_CA_PASSWORD: ${STEP_CA_PASSWORD}
+      ORGANISATION: ${ORGANISATION}
+      DOMAIN_SUFFIX: ${DOMAIN_SUFFIX}
+    container_name: stepca
+    volumes:
+      - ./step-ca-datas:/home/step/.step
+    user: "1000:1000"
+    networks:
+      - web-proxy
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost:9000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      
+      # Configuration ACME
+      - --certificatesresolvers.stepca.acme.tlschallenge=true
+      - --certificatesresolvers.stepca.acme.email=${TRAEFIK_EMAIL}
+      - --certificatesresolvers.stepca.acme.storage=/traefik-config/acme.json
+      - --certificatesresolvers.stepca.acme.caserver=https://stepca:9000/acme/traefik-acme/directory
+      
+      - --log.level=DEBUG
+    environment:
+      - LEGO_CA_CERTIFICATES=/certs/root_ca.crt
+    labels:
+      - traefik.enable=true
+      
+      # HTTP → HTTPS global redirection
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.routers.http-catchall.middlewares=redirect-to-https
+      - traefik.http.routers.http-catchall.priority=1
+      
+      # Dashboard Traefik
+      - traefik.http.routers.traefik.rule=Host(`traefik${DOMAIN_SUFFIX}`)
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.tls.certresolver=stepca
+      - traefik.http.routers.traefik.service=api@internal
+    ports:
+      - "172.0.0.1:80:80"    # ✅ Bind on 172.0.0.1
+      - "172.0.0.1:443:443"  # ✅ Bind on 172.0.0.1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./step-ca-datas/certs/root_ca.crt:/certs/root_ca.crt:ro
+      - ./traefik-config:/traefik-config:rw
+    networks:
+      - web-proxy
+    depends_on:
+      stepca:
+        condition: service_healthy
+
+  whoami:
+    image: traefik/whoami
+    container_name: whoami
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.whoami.rule=Host(`whoami.test`)
+      - traefik.http.routers.whoami.entrypoints=websecure
+      - traefik.http.routers.whoami.tls.certresolver=stepca
+    networks:
+      - web-proxy
+
+networks:
+  web-proxy:
+    driver: bridge
