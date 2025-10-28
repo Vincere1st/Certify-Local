@@ -5,6 +5,7 @@ services:
       STEP_CA_PASSWORD: ${STEP_CA_PASSWORD}
       ORGANISATION: ${ORGANISATION}
       DOMAIN_SUFFIX: ${DOMAIN_SUFFIX}
+      TRAEFIK_EMAIL: ${TRAEFIK_EMAIL}
     container_name: stepca
     volumes:
       - ./step-ca-datas:/home/step/.step
