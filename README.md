@@ -25,7 +25,11 @@ This configuration uses a custom, self-signed Certificate Authority (Step-CA) an
 
 ## 📝 Environment Variables (`.env`)
  
-Create a `.env` file at the root of the project to configure the services.
+Copy the `.env.example` to `.env` file at the root of the project and modify the values in according how you want to configure the services.
+
+  ```sh
+  cp .env.example .env
+  ``` 
  
 
 | Variable | Description | Constraint | Used by |
