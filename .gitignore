@@ -1,2 +1,3 @@
 .env
 /step-ca-datas/*
+traefik-config/acme.json

@@ -40,18 +40,14 @@ if [ ! -f "/home/step/.step/config/ca.json" ]; then
         --address=":9000" \
         --provisioner="admin" \
         --password-file="${PASSWORD_FILEPATH}" \
-        --provisioner-password-file="${PASSWORD_FILEPATH}" \
-        --acme \
-        --dns-names="${DOMAIN_SUFFIX#.}"
+        --provisioner-password-file="${PASSWORD_FILEPATH}"
 
     echo "⚙️ Removing default JWK provisioner..."
-    step ca provisioner remove admin --all || true
+    step ca provisioner remove admin || true
 
     echo "🔧 Adding ACME provisioner for Traefik..."
-    step ca provisioner add traefik-acme --type ACME --claims='{
-      "allowWildcardNames": false,
-      "maxTLSCertDuration": "8760h"
-    }'
+    
+    step ca provisioner add traefik-acme --type=ACME
 
     echo "✅ Step-CA successfully initialized with ACME support for ${DOMAIN_SUFFIX}"
 fi
