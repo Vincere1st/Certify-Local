@@ -7,6 +7,7 @@ services:
       DOMAIN_SUFFIX: ${DOMAIN_SUFFIX}
       TRAEFIK_EMAIL: ${TRAEFIK_EMAIL}
     container_name: stepca
+    restart: unless-stopped
     volumes:
       - ./step-ca-datas:/home/step/.step
     user: "1000:1000"
@@ -22,6 +23,7 @@ services:
   traefik:
     image: traefik:v3.2
     container_name: traefik
+    restart: unless-stopped
     command:
       - --api.insecure=true
       - --providers.docker=true
@@ -41,14 +43,15 @@ services:
     labels:
       - traefik.enable=true
       
-      # HTTP → HTTPS global redirection
+      # HTTP → HTTPS catchall for redirection
       - traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)
       - traefik.http.routers.http-catchall.entrypoints=web
-      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
-      - traefik.http.routers.http-catchall.priority=1
-      
-      # Middleware de redirection
       - traefik.http.routers.http-catchall.middlewares=redirect-to-https
+      - traefik.http.routers.http-catchall.priority=1
+
+      
+      # Redirection Middleware
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
       - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
 
       # Dashboard Traefik
